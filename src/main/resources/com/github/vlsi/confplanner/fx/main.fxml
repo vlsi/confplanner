@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.AnchorPane?>
+<AnchorPane xmlns:fx="http://javafx.com/fxml/1" prefHeight="98.0"
+            prefWidth="196.0"
+            xmlns="http://javafx.com/javafx/8.0.121"
+            fx:controller="com.github.vlsi.confplanner.fx.MainController">
+    <children>
+        <Button layoutX="14.0" layoutY="14.0" mnemonicParsing="false"
+                onAction="#parseFirstVotes" text="Parse votes"/>
+        <Button layoutX="14.0" layoutY="53.0" mnemonicParsing="false"
+                onAction="#createSchedule" text="Plan schedule"/>
+    </children>
+</AnchorPane>

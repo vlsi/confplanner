@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" prefHeight="600.0"
+            prefWidth="800.0"
+            xmlns="http://javafx.com/javafx/8.0.121"
+            fx:controller="com.github.vlsi.confplanner.fx.ScheduleController">
+    <center>
+        <WebView fx:id="results" prefHeight="800.0" prefWidth="600.0"
+                 BorderPane.alignment="CENTER">
+            <BorderPane.margin>
+                <Insets/>
+            </BorderPane.margin>
+        </WebView>
+    </center>
+    <top>
+        <FlowPane prefWidth="200.0" BorderPane.alignment="CENTER">
+            <children>
+                <Label text="Duration, sec:"/>
+                <Spinner fx:id="duration" amountToStepBy="20" editable="true"
+                         initialValue="5" max="9999" min="1" prefWidth="80.0"/>
+                <Label text="Room capacity score factor:">
+                    <FlowPane.margin>
+                        <Insets left="8.0"/>
+                    </FlowPane.margin>
+                </Label>
+                <Spinner fx:id="capacityFactor" amountToStepBy="50"
+                         editable="true" initialValue="100" max="9999" min="1"
+                         prefWidth="80.0"/>
+                <Button fx:id="start" mnemonicParsing="false"
+                        onAction="#startStop" text="Start">
+                    <FlowPane.margin>
+                        <Insets left="12.0"/>
+                    </FlowPane.margin>
+                </Button>
+            </children>
+        </FlowPane>
+    </top>
+    <bottom>
+        <FlowPane prefWidth="200.0" BorderPane.alignment="CENTER">
+            <children>
+                <ProgressBar fx:id="progress" prefWidth="200.0" progress="0.0"/>
+                <Label fx:id="statusLabel"/>
+            </children>
+        </FlowPane>
+    </bottom>
+</BorderPane>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info" strict="true" name="XMLConfigTest"
+               packages="org.apache.logging.log4j.test">
+    <Properties>
+        <Property name="filename">target/run.log</Property>
+    </Properties>
+    <!--<Filter type="ThresholdFilter" level="trace"/>-->
+
+    <Appenders>
+        <Appender type="Console" name="STDOUT">
+            <Layout type="PatternLayout" pattern="%m %n"/>
+        </Appender>
+        <!--<Pattern>%d %p %C{1.} [%t] %m%n</Pattern>-->
+        <Appender type="File" name="File" fileName="${filename}">
+            <Layout type="PatternLayout">
+                <Pattern>%d %p %C{1.} [%t] %m%n</Pattern>
+            </Layout>
+        </Appender>
+    </Appenders>
+
+    <Loggers>
+        <!--<Logger1 name="org.apache.logging.log4j.test2" level="debug"-->
+        <!--additivity="false">-->
+        <!--<AppenderRef ref="File"/>-->
+        <!--</Logger1>-->
+
+        <Logger name="org.optaplanner" level="debug"/>
+
+        <Root level="INFO">
+            <AppenderRef ref="STDOUT"/>
+            <AppenderRef ref="File"/>
+        </Root>
+    </Loggers>
+
+</Configuration>

@@ -1,0 +1,25 @@
+# Build results
+data/
+target/
+coverage-report/
+dependency-reduced-pom.xml
+/source/revision.txt
+*.orig
+
+/it-dist-check/logs/
+/logs/
+
+#IDE projects
+.idea/
+*.iml
+
+# MacOS cache file
+.DS_Store
+
+# Windows image cache files
+Thumbs.db
+/bin
+/.classpath
+/.project
+/.settings/org.eclipse.core.resources.prefs
+/.settings/org.eclipse.m2e.core.prefs

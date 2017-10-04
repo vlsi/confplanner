@@ -1,0 +1,211 @@
+package com.github.vlsi.confplanner.solver;
+    dialect "java"
+
+import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScoreHolder;
+
+import com.github.vlsi.confplanner.model.Talk;
+import com.github.vlsi.confplanner.solver.TalkPlacement;
+import com.github.vlsi.confplanner.model.TalkSequence;
+import com.github.vlsi.confplanner.model.Room;
+import com.github.vlsi.confplanner.model.RoomTimeslot;
+import com.github.vlsi.confplanner.model.Timeslot;
+import com.github.vlsi.confplanner.solver.ExpectedNumListeners;
+import java.util.Collections
+import java.time.Duration;
+
+global HardSoftScoreHolder scoreHolder;
+
+rule "talkSpeakerIntersection"
+    salience 1
+    when
+        $a: Talk($leftName: name, $leftSpeakers: speakers)
+        $b: Talk(name > $leftName, eval(!Collections.disjoint(speakers, $leftSpeakers)))
+    then
+        insertLogical(new TalkSpeakerConflict($a, $b));
+        insertLogical(new TalkSpeakerConflict($b, $a));
+end
+
+rule "talkTopicIntersection"
+    salience 1
+    when
+        $a: Talk($leftName: name, topics != null, $leftTopics: topics)
+        $b: Talk(name > $leftName, topics != null, eval(!Collections.disjoint(topics, $leftTopics)))
+    then
+        insertLogical(new TalkTopicConflict($a, $b));
+        insertLogical(new TalkTopicConflict($b, $a));
+end
+
+rule "roomIsAvailable"
+    when
+        TalkPlacement(slot != null, $slot: slot, room != null, $room: room)
+        not RoomTimeslot(slot == $slot, room == $room)
+    then
+    scoreHolder.addHardConstraintMatch(kcontext, -1);
+end
+
+rule "roomOccupancy"
+    when
+        TalkPlacement(slot != null, $slot: slot, room != null, $room: room, $leftId: id)
+        exists TalkPlacement(id > $leftId, slot == $slot, room == $room)
+    then
+        scoreHolder.addHardConstraintMatch(kcontext, -1);
+end
+
+rule "speakerOccupancy"
+    when
+        TalkPlacement(slot != null, $leftTimeslot : slot, $talk: talk)
+        TalkSpeakerConflict(a == $talk, $b: b)
+        exists TalkPlacement(slot == $leftTimeslot, talk == $b)
+    then
+        scoreHolder.addHardConstraintMatch(kcontext, -1);
+end
+
+rule "speakerInDiscussionZone"
+    when
+        TalkPlacement($leftId : id, slot != null, $leftTimeslot : slot, $talk: talk)
+        not TalkSequence(first == $talk, type == TalkSequence.Type.HARD)
+        TalkSpeakerConflict(a == $talk, $b: b)
+        exists TalkPlacement(slot > $leftTimeslot, talk == $b
+            , eval(Duration.between($leftTimeslot.getEndTimestamp(), slot.getStartTimestamp()).toMinutes() < 50)
+            )
+    then
+        scoreHolder.addHardConstraintMatch(kcontext, -1);
+end
+
+//rule "multislotShareRoom"
+//    when
+//        Talk(prevTitle != null, $prevTitle: prevTitle, $room: room)
+//        Talk(title == $prevTitle, slot!=null, room != $room)
+//    then
+//        scoreHolder.addHardConstraintMatch(kcontext, -1);
+//end
+//
+//rule "multislotAreAdjacent"
+//    when
+//        Talk(prevTitle != null, $prevTitle: prevTitle, $room: room, slot != null, $slot: slot, $cnt: numListeners)
+//        Talk(title == $prevTitle, slot!=null, $prevSlot: slot)
+//    then
+//        int minutes = (int) $slot.minus($prevSlot).toMinutes();
+////        System.out.println("!!!" + $prevSlot + " " + $slot + ": " + minutes);
+//        if (minutes <= 0) {
+//            // Hard constraint if "prev" talk starts later or at the same time
+//            scoreHolder.addHardConstraintMatch(kcontext, minutes);
+////        }
+//        } else {
+////             Soft constraint to use closer slots
+//            scoreHolder.addSoftConstraintMatch(kcontext, -(minutes-30)*$cnt/10);
+//        }
+//end
+//
+//rule "multislotShouldBeBefore1500"
+//    when
+//        Talk(prevTitle != null, slot != null, slot.start.hour >= 15)
+//    then
+//        scoreHolder.addHardConstraintMatch(kcontext, -1);
+//end
+
+rule "speakerBannedFromBigRoom"
+    when
+        TalkPlacement(talk.maxRoomSize != null, $maxSize: talk.maxRoomSize, room != null, $room: room, $room.capacity > $maxSize)
+    then
+        scoreHolder.addHardConstraintMatch(kcontext, $maxSize - $room.getCapacity());
+end
+
+// Soft constraints
+rule "roomCapacity"
+    when
+        ScoringParams($roomCapacityFactor: roomCapacityFactor)
+        $room: Room($capacity: capacity)
+        TalkPlacement(room == $room, $talk: talk, $count: expectedNumListeners)
+    then
+//        scoreHolder.addSoftConstraintMatch(kcontext, (int)(-Math.abs(0.8*$capacity-$expCnt)*0.5));
+//        double fill = 1.0*$count/$capacity;
+//        double k = 1;//fill > 1 ? 2: (fill<0.9?0.5:0.9);
+//        int score = (int)(-Math.abs(Math.atan(fill-1)*k*$capacity));
+//        System.out.println("$room = " + $room+ ", "+$count+", " + score);
+        int score = (int)Math.round(Math.pow($count-$capacity, 2)/$roomCapacityFactor);
+        if ($count > $capacity) {
+            score += $count-$capacity;
+        }
+        scoreHolder.addSoftConstraintMatch(kcontext, -score);
+
+//        if (fill < 0.6) {
+//            scoreHolder.addSoftConstraintMatch(kcontext, (int)(-(0.9*$capacity-$expCnt)*2));
+//        } else if (fill < 0.9) {
+//            scoreHolder.addSoftConstraintMatch(kcontext, (int)(-Math.abs($expCnt-0.9*$capacity)*0.5));
+//        } else if (fill > 1.3){
+//            scoreHolder.addSoftConstraintMatch(kcontext, (int)(-($expCnt-$capacity)*2));
+//        } else if (fill > 1){
+//            scoreHolder.addSoftConstraintMatch(kcontext, (int)(-($expCnt-$capacity)));
+//        }
+//        if (fill > 0.9) {
+//        } else {
+//            scoreHolder.addSoftConstraintMatch(kcontext, (int)(($expCnt-0.9*$capacity)*0.5));
+//        }
+//        scoreHolder.addSoftConstraintMatch(kcontext, -50);
+end
+
+rule "perSlotCapacity"
+    when
+        $t: Timeslot()
+        accumulate(TalkPlacement(slot == $t, $cnt: expectedNumListeners)
+                 , $score: sum($cnt))
+    then
+        scoreHolder.addSoftConstraintMatch(kcontext, -(int)Math.round($score*$score/1000.0));
+end
+
+rule "topicDiversity"
+    when
+        TalkPlacement($leftId : id, $leftTalk : talk, $leftTimeslot : slot)
+        TalkTopicConflict(a == $leftTalk, $b: b, $count: count)
+        TalkPlacement(slot == $leftTimeslot, id > $leftId, talk == $b)
+    then
+        scoreHolder.addSoftConstraintMatch(kcontext, -(int)(50*$count));
+end
+
+rule "visitMostTalks"
+    when
+        TalkConflict($a: a, $b: b, $count: count)
+        TalkPlacement(talk == $a, $slot: slot)
+        TalkPlacement(talk == $b, slot == $slot)
+    then
+        // number of people that will miss second talk
+        scoreHolder.addSoftConstraintMatch(kcontext, -(int)Math.round($count));
+end
+
+rule "languageDiversity"
+    when
+        $slot : Timeslot()
+        accumulate (
+            TalkPlacement(talk.language != null, $lang: talk.language, slot == $slot),
+            $langs: collectList($lang.getName())
+        )
+    then
+        scoreHolder.addSoftConstraintMatch(kcontext, LanguageDiversityScorer.score($langs));
+end
+
+rule "nextTalkSharesTopic"
+    when
+        TalkPlacement(slot != null, $leftTalk: talk, $leftTimeslot : slot, $prevRoom: room)
+        TalkTopicConflict(a == $leftTalk, $b: b, $count: count)
+        TalkPlacement(slot != null, slot > $leftTimeslot, $slot : slot, talk==$b
+            , room == $prevRoom)
+        eval($slot.minus($leftTimeslot).toMinutes() < 60)
+    then
+        scoreHolder.addSoftConstraintMatch(kcontext, 10);
+end
+
+
+rule "speakerLeavingEarly"
+    when
+        TalkPlacement(talk.leaveTime != null, slot != null, $leaveTime: talk.leaveTime, $slot: slot, $slot.endTimestamp > $leaveTime)
+    then
+        scoreHolder.addHardConstraintMatch(kcontext, -(int)(Duration.between($leaveTime, $slot.getEndTimestamp()).toMinutes()));
+end
+
+rule "speakerArrivingLate"
+    when
+        TalkPlacement(talk.arriveTime != null, slot != null, $arriveTime: talk.arriveTime, $slot: slot, $slot.startTimestamp < $arriveTime)
+    then
+        scoreHolder.addHardConstraintMatch(kcontext, -(int)(Duration.between($slot.getStartTimestamp(), $arriveTime).toMinutes()));
+end
