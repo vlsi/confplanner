@@ -365,44 +365,19 @@ public class ConferenceData {
             slotTalks.computeIfAbsent(slot, k -> new ArrayList<>()).add(talk);
         }
 
-        for (Map.Entry<Timeslot, List<TalkPlacement>> entry : slotTalks.entrySet()) {
-            List<TalkPlacement> value = entry.getValue();
-            for (int i = 0; i < value.size(); i++) {
-                TalkPlacement talk = value.get(i);
-                if (i > 0) {
-                    pw.print('\t');
-                }
-                pw.print('"' + talk.getTalk().getSpeakers()
-                        .stream()
-                        .map(Speaker::getName)
-                        .collect(Collectors.joining(", ")) + '"');
-            }
-            pw.println("<br>");
-        }
+        printTalks(pw, slotTalks, p -> p.getTalk().getSpeakers()
+                .stream()
+                .map(NamedEntity::getName)
+                .collect(Collectors.joining(", ")));
         pw.println("<br>");
-        for (Map.Entry<Timeslot, List<TalkPlacement>> entry : slotTalks.entrySet()) {
-            List<TalkPlacement> value = entry.getValue();
-            for (int i = 0; i < value.size(); i++) {
-                TalkPlacement talk = value.get(i);
-                if (i > 0) {
-                    pw.print('\t');
-                }
-                pw.print('"' + talk.getTalk().getFullTitle() + '"');
-            }
-            pw.println("<br>");
-        }
+        printTalks(pw, slotTalks, p -> p.getTalk().getFullTitle());
         pw.println("<br>");
-        for (Map.Entry<Timeslot, List<TalkPlacement>> entry : slotTalks.entrySet()) {
-            List<TalkPlacement> value = entry.getValue();
-            for (int i = 0; i < value.size(); i++) {
-                TalkPlacement talk = value.get(i);
-                if (i > 0) {
-                    pw.print('\t');
-                }
-                pw.print('"' + talk.getTalk().getLanguage().getName() + '"');
-            }
-            pw.println("<br>");
-        }
+        printTalks(pw, slotTalks, p -> p.getTalk().getLanguage().getName());
+        pw.println("<br>");
+        printTalks(pw, slotTalks, p -> p.getTalk().getTopics() == null ? "" : p.getTalk().getTopics()
+                .stream()
+                .map(NamedEntity::getName)
+                .collect(Collectors.joining(", ")));
         pw.println("<br>");
 
         for (TalkPlacement talk : talkPlacements) {
@@ -466,6 +441,21 @@ public class ConferenceData {
                     pw.println("<br>");
                 }
             }
+        }
+    }
+
+    private void printTalks(PrintWriter pw, Map<Timeslot, List<TalkPlacement>> slotTalks,
+                            Function<TalkPlacement, String> converter) {
+        for (Map.Entry<Timeslot, List<TalkPlacement>> entry : slotTalks.entrySet()) {
+            List<TalkPlacement> value = entry.getValue();
+            for (int i = 0; i < value.size(); i++) {
+                TalkPlacement talk = value.get(i);
+                if (i > 0) {
+                    pw.print('\t');
+                }
+                pw.print('"' + converter.apply(talk) + '"');
+            }
+            pw.println("<br>");
         }
     }
 
