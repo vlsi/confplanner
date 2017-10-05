@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <solver>
     <!--<environmentMode>FAST_ASSERT</environmentMode>-->
-    <solutionClass>com.github.vlsi.confplanner.model.ConferenceData
-    </solutionClass>
+    <solutionClass>com.github.vlsi.confplanner.model.ConferenceData</solutionClass>
     <entityClass>com.github.vlsi.confplanner.solver.TalkPlacement</entityClass>
 
     <scoreDirectorFactory>
-        <scoreDrl>
-            com/github/vlsi/confplanner/solver/confScheduleScoreRules.drl
-        </scoreDrl>
+        <scoreDrl>com/github/vlsi/confplanner/solver/confScheduleScoreRules.drl</scoreDrl>
     </scoreDirectorFactory>
 
     <termination>
@@ -16,8 +13,7 @@
         <!--<bestScoreLimit>-0hard/-999999soft</bestScoreLimit>-->
     </termination>
     <constructionHeuristic>
-        <constructionHeuristicType>FIRST_FIT_DECREASING
-        </constructionHeuristicType>
+        <constructionHeuristicType>FIRST_FIT_DECREASING</constructionHeuristicType>
     </constructionHeuristic>
     <localSearch>
         <unionMoveSelector>
