@@ -28,6 +28,15 @@ public class VoteTitleParserTest {
     }
 
     @Test
+    public void testSingleSpeaker3() throws Exception {
+        VoteTitleParser p = new VoteTitleParser();
+        Talk talk = p.parse("«Жизнь без подключения: от хаоса к консенсусу» - Евгений Камышанов, EPAM Systems [300/RU]");
+        Assert.assertEquals(talk.getLanguage(), new Language("ru"));
+        Assert.assertEquals(talk.getName(), "Жизнь без подключения: от хаоса к консенсусу");
+        Assert.assertEquals(talk.getSpeakers(), Arrays.asList(new Speaker("Евгений Камышанов")));
+    }
+
+    @Test
     public void testMultiSpeaker() throws Exception {
         VoteTitleParser p = new VoteTitleParser();
         Talk talk = p.parse("Troubleshooting & debugging production applications in Kubernetes (a.k.a. The Failing Demo Talk) — Ray Тsang, Baruch Sadogursky, Google, JFrog  [200/EN]");

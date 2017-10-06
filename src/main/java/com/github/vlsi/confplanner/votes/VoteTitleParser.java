@@ -22,7 +22,7 @@ public class VoteTitleParser {
         }
         String title = matcher.group(1);
         if (title.startsWith("«") && title.endsWith("»")) {
-            title = title.substring(1, title.length() - 2);
+            title = title.substring(1, title.length() - 1);
         }
         String speakersStr = matcher.group(2);
         String[] speakers = speakersStr.split(", ");
