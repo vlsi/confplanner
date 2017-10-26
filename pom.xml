@@ -6,7 +6,7 @@
 
     <groupId>com.github.vlsi.confplanner</groupId>
     <artifactId>planner-core</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 
     <properties>
         <encoding>UTF-8</encoding>
