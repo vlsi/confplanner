@@ -70,7 +70,11 @@ public class ScheduleController {
             } catch (ExecutionException e) {
                 Throwable cause = e.getCause();
                 cause.printStackTrace();
-                statusLabel.setText("Failed: " + cause.getMessage());
+                String msg = cause.getMessage();
+                if (msg.length() > 200) {
+                    msg = msg.substring(0, 200);
+                }
+                statusLabel.setText("Failed: " + msg);
                 StringWriter sw = new StringWriter();
                 cause.printStackTrace(new PrintWriter(sw));
                 results.getEngine().loadContent(sw.toString(), "text/plain");
