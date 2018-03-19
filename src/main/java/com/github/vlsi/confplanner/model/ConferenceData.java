@@ -95,8 +95,8 @@ public class ConferenceData {
     @JsonProperty
     public void setTalks(List<Talk> talks) {
         this.talks = talks;
-        this.talkPlacements = talks.stream().map(TalkPlacement::new).collect(Collectors.toList());
-        this.talkPlacementMap = talkPlacements.stream().collect(Collectors.toMap(TalkPlacement::getTalk, Function.identity()));
+        this.talkPlacementMap = talks.stream().collect(Collectors.toMap(Function.identity(), TalkPlacement::new));
+        this.talkPlacements = new ArrayList<>(this.talkPlacementMap.values());
         this.talkMap = talks.stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
     }
 
@@ -108,6 +108,7 @@ public class ConferenceData {
         this.languages = languages;
     }
 
+    @ProblemFactCollectionProperty
     public List<Topic> getTopics() {
         return topics;
     }
@@ -126,6 +127,7 @@ public class ConferenceData {
         this.timeslots = timeslots;
     }
 
+    @ProblemFactCollectionProperty
     public List<Day> getDays() {
         return days;
     }
@@ -378,6 +380,10 @@ public class ConferenceData {
                 .stream()
                 .map(NamedEntity::getName)
                 .collect(Collectors.joining(", ")));
+        pw.println("<br>Num listeners");
+        printTalks(pw, slotTalks, p -> String.valueOf(p.getTalk().getNumListeners()));
+        pw.println("<br>Complexity");
+        printTalks(pw, slotTalks, p -> p.getTalk().getComplexity());
         pw.println("<br>");
 
         for (TalkPlacement talk : talkPlacements) {
@@ -398,7 +404,14 @@ public class ConferenceData {
 //            slotTalks.add(talk);
             Room room = talk.getRoom();
             try {
-                pw.println("&nbsp;&nbsp;&nbsp;&nbsp;" + room.getName() + ":" + room.getCapacity()
+                String roomDescr;
+                if (room == null) {
+                    roomDescr = "noroom";
+                } else {
+                    roomDescr = room.getName() + ":" + room.getCapacity();
+                }
+
+                pw.println("&nbsp;&nbsp;&nbsp;&nbsp;" + roomDescr
                         + "(" + Math.round(talk.getExpectedNumListeners()) + ")"
                         + ", " + talk.getTalk().getLanguage().getName()
                         + ", " + (talk.getTalk().getTopics() == null ? "" : talk.getTalk().getTopics().stream().map(Topic::getName).collect(Collectors.toList()))
@@ -411,6 +424,9 @@ public class ConferenceData {
                 continue;
             }
             Indictment indictment = map.get(talk);
+            if (indictment == null) {
+                continue;
+            }
             pw.println("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + indictment.getScoreTotal() + "<br>");
             for (ConstraintMatch match : indictment.getConstraintMatchSet()) {
                 String cname = match.getConstraintName();
@@ -453,6 +469,13 @@ public class ConferenceData {
                 if (i > 0) {
                     pw.print('\t');
                 }
+                Room room = talk.getRoom();
+                if (room == null) {
+                    pw.print("noroom");
+                } else {
+                    pw.print(room.getName());
+                }
+                pw.print(": ");
                 pw.print('"' + converter.apply(talk) + '"');
             }
             pw.println("<br>");

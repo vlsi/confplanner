@@ -8,7 +8,7 @@ public class TalkSequence {
     private final Talk first;
     @JsonIdentityReference(alwaysAsId = true)
     private final Talk second;
-    @JsonProperty(defaultValue = "HARD")
+    @JsonProperty(defaultValue = "ADJACENT")
     private final Type type;
     public TalkSequence(@JsonProperty("first") Talk first, @JsonProperty("second") Talk second
             , @JsonProperty("type") Type type) {
@@ -30,7 +30,7 @@ public class TalkSequence {
     }
 
     public enum Type {
-        HARD,
+        ADJACENT,
         SOFT,
     }
 }

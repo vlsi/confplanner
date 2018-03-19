@@ -9,6 +9,7 @@ import java.time.OffsetDateTime;
 @JsonIdentityInfo(scope = Speaker.class, generator = ObjectIdGenerators.PropertyGenerator.class, property = "name")
 public class Speaker extends NamedEntity implements Comparable<Speaker> {
     private Integer maxRoomSize;
+    private Integer minRoomSize;
     private OffsetDateTime arriveTime;
     private OffsetDateTime leaveTime;
 
@@ -38,6 +39,14 @@ public class Speaker extends NamedEntity implements Comparable<Speaker> {
 
     public void setMaxRoomSize(Integer maxRoomSize) {
         this.maxRoomSize = maxRoomSize;
+    }
+
+    public Integer getMinRoomSize() {
+        return minRoomSize;
+    }
+
+    public void setMinRoomSize(Integer minRoomSize) {
+        this.minRoomSize = minRoomSize;
     }
 
     @Override

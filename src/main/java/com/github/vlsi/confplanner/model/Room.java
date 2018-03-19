@@ -2,6 +2,7 @@ package com.github.vlsi.confplanner.model;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
@@ -15,11 +16,15 @@ public class Room extends NamedEntity implements Comparable<Room> {
     private List<Timeslot> availableTimeslots;
     @JsonIdentityReference(alwaysAsId = true)
     private List<Timeslot> unavailableTimeslots;
+    @JsonProperty(defaultValue = "false")
+    private boolean inviteOnly;
 
-    public Room(@JsonProperty("name") String name, @JsonProperty("capacity") int capacity) {
+    public Room(@JsonProperty("name") String name, @JsonProperty("capacity") int capacity,
+                @JsonProperty("inviteOnly") boolean inviteOnly) {
         super(name);
 //        this.name = name;
         this.capacity = capacity;
+        this.inviteOnly = inviteOnly;
     }
 
     public int getCapacity() {
@@ -40,6 +45,15 @@ public class Room extends NamedEntity implements Comparable<Room> {
 
     public void setUnavailableTimeslots(List<Timeslot> unavailableTimeslots) {
         this.unavailableTimeslots = unavailableTimeslots;
+    }
+
+    @JsonIgnore
+    public boolean isInviteOnly() {
+        return inviteOnly;
+    }
+
+    public void setInviteOnly(boolean inviteOnly) {
+        this.inviteOnly = inviteOnly;
     }
 
     @Override

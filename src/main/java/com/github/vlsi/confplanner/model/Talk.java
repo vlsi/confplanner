@@ -24,12 +24,19 @@ public class Talk extends NamedEntity {
     private OffsetDateTime arriveTime;
     private OffsetDateTime leaveTime;
     private Integer maxRoomSize;
+    private Integer minRoomSize;
+    @JsonProperty
     private int numListeners;
     private String complexity;
+    private boolean ignore;
+    @JsonProperty
+    private Room room;
 
-    public Talk(@JsonProperty("language") Language language, @JsonProperty("name") String name) {
+    public Talk(@JsonProperty("language") Language language, @JsonProperty("name") String name,
+                @JsonProperty("room") Room room) {
         super(name);
         this.language = language;
+        this.room = room;
     }
 
     @JsonIgnore
@@ -56,9 +63,18 @@ public class Talk extends NamedEntity {
 
     public void setSpeakers(List<Speaker> speakers) {
         this.speakers = speakers;
-        this.arriveTime = speakers.stream().map(Speaker::getArriveTime).filter(Objects::nonNull).max(Comparator.naturalOrder()).orElse(null);
-        this.leaveTime = speakers.stream().map(Speaker::getLeaveTime).filter(Objects::nonNull).min(Comparator.naturalOrder()).orElse(null);
-        this.maxRoomSize = speakers.stream().map(Speaker::getMaxRoomSize).filter(Objects::nonNull).max(Comparator.naturalOrder()).orElse(null);
+        if (arriveTime == null) {
+            this.arriveTime = speakers.stream().map(Speaker::getArriveTime).filter(Objects::nonNull).max(Comparator.naturalOrder()).orElse(null);
+        }
+        if (leaveTime == null) {
+            this.leaveTime = speakers.stream().map(Speaker::getLeaveTime).filter(Objects::nonNull).min(Comparator.naturalOrder()).orElse(null);
+        }
+        if (maxRoomSize == null) {
+            this.maxRoomSize = speakers.stream().map(Speaker::getMaxRoomSize).filter(Objects::nonNull).min(Comparator.naturalOrder()).orElse(null);
+        }
+        if (minRoomSize == null) {
+            this.minRoomSize = speakers.stream().map(Speaker::getMinRoomSize).filter(Objects::nonNull).max(Comparator.naturalOrder()).orElse(null);
+        }
     }
 
     public List<Topic> getTopics() {
@@ -67,6 +83,26 @@ public class Talk extends NamedEntity {
 
     public void setTopics(List<Topic> topics) {
         this.topics = topics;
+    }
+
+    @JsonProperty
+    public void setArriveTime(OffsetDateTime arriveTime) {
+        this.arriveTime = arriveTime;
+    }
+
+    @JsonProperty
+    public void setLeaveTime(OffsetDateTime leaveTime) {
+        this.leaveTime = leaveTime;
+    }
+
+    @JsonProperty
+    public void setMaxRoomSize(Integer maxRoomSize) {
+        this.maxRoomSize = maxRoomSize;
+    }
+
+    @JsonProperty
+    public void setMinRoomSize(Integer minRoomSize) {
+        this.minRoomSize = minRoomSize;
     }
 
     @JsonIgnore
@@ -85,10 +121,25 @@ public class Talk extends NamedEntity {
     }
 
     @JsonIgnore
+    public Integer getMinRoomSize() {
+        return minRoomSize;
+    }
+
+    @JsonIgnore
+    public Room getRoom() {
+        return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
+    }
+
+    @JsonIgnore
     public int getNumListeners() {
         return numListeners == 0 ? 30 : numListeners;
     }
 
+    @JsonProperty
     public void setNumListeners(int numListeners) {
         this.numListeners = numListeners;
     }
@@ -99,5 +150,14 @@ public class Talk extends NamedEntity {
 
     public void setComplexity(String complexity) {
         this.complexity = complexity;
+    }
+
+    @JsonIgnore
+    public boolean isIgnore() {
+        return ignore;
+    }
+
+    public void setIgnore(boolean ignore) {
+        this.ignore = ignore;
     }
 }

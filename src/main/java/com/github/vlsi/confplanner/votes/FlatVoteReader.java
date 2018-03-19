@@ -43,6 +43,9 @@ public class FlatVoteReader implements Supplier<List<FlatVotes>> {
                     if (s.isEmpty()) {
                         continue;
                     }
+                    if ("Да".equals(s) || "Нет".equals(s)) {
+                        continue;
+                    }
                     Talk talk = p.parse(s);
                     selectedTalks.add(talk);
                 }

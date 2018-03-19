@@ -3,7 +3,9 @@ package com.github.vlsi.confplanner.solver;
 
 import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScoreHolder;
 
+import com.github.vlsi.confplanner.model.Day;
 import com.github.vlsi.confplanner.model.Talk;
+import com.github.vlsi.confplanner.model.Topic;
 import com.github.vlsi.confplanner.solver.TalkPlacement;
 import com.github.vlsi.confplanner.model.TalkSequence;
 import com.github.vlsi.confplanner.model.Room;
@@ -48,7 +50,7 @@ rule "roomOccupancy"
         TalkPlacement(slot != null, $slot: slot, room != null, $room: room, $leftId: id)
         exists TalkPlacement(id > $leftId, slot == $slot, room == $room)
     then
-        scoreHolder.addHardConstraintMatch(kcontext, -1);
+        scoreHolder.addHardConstraintMatch(kcontext, -100);
 end
 
 rule "speakerOccupancy"
@@ -57,29 +59,82 @@ rule "speakerOccupancy"
         TalkSpeakerConflict(a == $talk, $b: b)
         exists TalkPlacement(slot == $leftTimeslot, talk == $b)
     then
-        scoreHolder.addHardConstraintMatch(kcontext, -1);
+        scoreHolder.addHardConstraintMatch(kcontext, -50);
 end
 
 rule "speakerInDiscussionZone"
     when
         TalkPlacement($leftId : id, slot != null, $leftTimeslot : slot, $talk: talk)
-        not TalkSequence(first == $talk, type == TalkSequence.Type.HARD)
+        not TalkSequence(first == $talk, type == TalkSequence.Type.ADJACENT)
         TalkSpeakerConflict(a == $talk, $b: b)
         exists TalkPlacement(slot > $leftTimeslot, talk == $b
             , eval(Duration.between($leftTimeslot.getEndTimestamp(), slot.getStartTimestamp()).toMinutes() < 50)
             )
     then
+        scoreHolder.addSoftConstraintMatch(kcontext, -20);
+//        scoreHolder.addHardConstraintMatch(kcontext, -1);
+end
+
+rule "multislotShareRoom"
+    when
+        TalkSequence($a: first, $b: second, type == TalkSequence.Type.ADJACENT)
+        TalkPlacement(talk == $a, $ra: room, room != null)
+        TalkPlacement(talk == $b, room != $ra, room != null)
+    then
         scoreHolder.addHardConstraintMatch(kcontext, -1);
 end
 
-//rule "multislotShareRoom"
-//    when
-//        Talk(prevTitle != null, $prevTitle: prevTitle, $room: room)
-//        Talk(title == $prevTitle, slot!=null, room != $room)
-//    then
-//        scoreHolder.addHardConstraintMatch(kcontext, -1);
-//end
-//
+rule "multislotAreAdjacent"
+    when
+        TalkSequence($a: first, $b: second, type == TalkSequence.Type.ADJACENT)
+        TalkPlacement(talk == $a, $sa: slot, slot != null)
+        TalkPlacement(talk == $b, $sb: slot, slot != null)
+    then
+        int minutes = (int) $sb.minus($sa).toMinutes();
+        if (minutes <= 0) {
+            // Hard constraint if "prev" talk starts later or at the same time
+            scoreHolder.addHardConstraintMatch(kcontext, minutes);
+//        }
+        } else {
+            if (minutes > 90) {
+                scoreHolder.addHardConstraintMatch(kcontext, -minutes);
+            } else {
+//             Soft constraint to use closer slots
+                scoreHolder.addSoftConstraintMatch(kcontext, -(minutes-30)*$a.getNumListeners()/10);
+            }
+        }
+end
+
+rule "dependentTalks"
+    when
+        TalkSequence($a: first, $b: second, type == TalkSequence.Type.SOFT)
+        TalkPlacement(talk == $a, $sa: slot, slot != null)
+        TalkPlacement(talk == $b, $sb: slot, slot != null)
+    then
+        int minutes = (int) $sb.minus($sa).toMinutes();
+        if (minutes <= 0) {
+            // Hard constraint if "prev" talk starts later or at the same time
+            scoreHolder.addHardConstraintMatch(kcontext, minutes);
+        }
+end
+
+rule "talkShouldBeInSpecialRoom"
+    when
+        $t: Talk($r: room, room != null)
+        TalkPlacement(talk == $t, room != $r, room != null)
+    then
+        scoreHolder.addHardConstraintMatch(kcontext, -1);
+end
+
+rule "talkShouldBeInRegularRoom"
+    when
+        $r: Room(inviteOnly)
+        $t: Talk(room == null)
+        TalkPlacement(talk == $t, room == $r)
+    then
+        scoreHolder.addHardConstraintMatch(kcontext, -1);
+end
+
 //rule "multislotAreAdjacent"
 //    when
 //        Talk(prevTitle != null, $prevTitle: prevTitle, $room: room, slot != null, $slot: slot, $cnt: numListeners)
@@ -111,6 +166,13 @@ rule "speakerBannedFromBigRoom"
         scoreHolder.addHardConstraintMatch(kcontext, $maxSize - $room.getCapacity());
 end
 
+rule "speakerRequiresBigRoom"
+    when
+        TalkPlacement(talk.minRoomSize != null, $minSize: talk.minRoomSize, room != null, $room: room, $room.capacity < $minSize)
+    then
+        scoreHolder.addHardConstraintMatch(kcontext, $room.getCapacity() - $minSize);
+end
+
 // Soft constraints
 rule "roomCapacity"
     when
@@ -123,7 +185,7 @@ rule "roomCapacity"
 //        double k = 1;//fill > 1 ? 2: (fill<0.9?0.5:0.9);
 //        int score = (int)(-Math.abs(Math.atan(fill-1)*k*$capacity));
 //        System.out.println("$room = " + $room+ ", "+$count+", " + score);
-        int score = (int)Math.round(Math.pow($count-$capacity, 2)/$roomCapacityFactor);
+        int score = (int)Math.round(Math.pow($count-$capacity, 2)/10000*$roomCapacityFactor);
         if ($count > $capacity) {
             score += $count-$capacity;
         }
@@ -147,11 +209,12 @@ end
 
 rule "perSlotCapacity"
     when
+        ScoringParams($roomCapacityFactor: roomCapacityFactor)
         $t: Timeslot()
         accumulate(TalkPlacement(slot == $t, $cnt: expectedNumListeners)
                  , $score: sum($cnt))
     then
-        scoreHolder.addSoftConstraintMatch(kcontext, -(int)Math.round($score*$score/1000.0));
+        scoreHolder.addSoftConstraintMatch(kcontext, -(int)Math.round($score*$score/1000.0/100*$roomCapacityFactor));
 end
 
 rule "topicDiversity"
@@ -161,6 +224,17 @@ rule "topicDiversity"
         TalkPlacement(slot == $leftTimeslot, id > $leftId, talk == $b)
     then
         scoreHolder.addSoftConstraintMatch(kcontext, -(int)(50*$count));
+end
+
+rule "topicPerDayDiversity"
+    when
+        $d: Day()
+        $topic: Topic()
+        accumulate($timeslot: Timeslot(day == $d)
+          and TalkPlacement(slot == $timeslot, $talk: talk, eval($talk.getTopics().contains($topic)))
+          , $score: count(1))
+    then
+        scoreHolder.addSoftConstraintMatch(kcontext, -(int)(2*$score*$score));
 end
 
 rule "visitMostTalks"

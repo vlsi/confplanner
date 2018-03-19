@@ -44,4 +44,22 @@ public class VoteTitleParserTest {
         Assert.assertEquals(talk.getName(), "Troubleshooting & debugging production applications in Kubernetes (a.k.a. The Failing Demo Talk)");
         Assert.assertEquals(talk.getSpeakers(), Arrays.asList(new Speaker("Ray Тsang"), new Speaker("Baruch Sadogursky")));
     }
+
+    @Test
+    public void testKeynote() throws Exception {
+        VoteTitleParser p = new VoteTitleParser();
+        Talk talk = p.parse("Кейноут: Unchain my heart —Dino Esposito  [200/ENG]");
+        Assert.assertEquals(talk.getLanguage(), new Language("en"));
+        Assert.assertEquals(talk.getName(), "Кейноут: Unchain my heart");
+        Assert.assertEquals(talk.getSpeakers(), Arrays.asList(new Speaker("Dino Esposito")));
+    }
+
+    @Test
+    public void testComment() throws Exception {
+        VoteTitleParser p = new VoteTitleParser();
+        Talk talk = p.parse("The (Ab)use and misuse of test automation — Alan Page, Unity [300/EN](автор книги про тесты в Microsoft)");
+        Assert.assertEquals(talk.getLanguage(), new Language("en"));
+        Assert.assertEquals(talk.getName(), "The (Ab)use and misuse of test automation");
+        Assert.assertEquals(talk.getSpeakers(), Arrays.asList(new Speaker("Alan Page")));
+    }
 }

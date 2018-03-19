@@ -71,6 +71,9 @@ public class ScheduleController {
                 Throwable cause = e.getCause();
                 cause.printStackTrace();
                 String msg = cause.getMessage();
+                if (msg == null) {
+                    msg = "";
+                }
                 if (msg.length() > 200) {
                     msg = msg.substring(0, 200);
                 }

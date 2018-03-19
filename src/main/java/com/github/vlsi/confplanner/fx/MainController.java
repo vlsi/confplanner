@@ -63,7 +63,7 @@ public class MainController {
         d.setCapacity(500);
         Day d1 = new Day("1", LocalDate.of(2000, 1, 1));
         d.setDays(Arrays.asList(d1));
-        d.setRooms(Arrays.asList(new Room("1", 400), new Room("2", 300), new Room("3", 200)));
+        d.setRooms(Arrays.asList(new Room("1", 400, false), new Room("2", 300, false), new Room("3", 200, false)));
         d.setTimeslots(Arrays.asList(
                 new Timeslot("1", d1, LocalTime.of(11, 40), 50),
                 new Timeslot("2", d1, LocalTime.of(12, 50), 50),
