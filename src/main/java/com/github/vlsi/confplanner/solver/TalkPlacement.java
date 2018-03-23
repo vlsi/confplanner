@@ -1,7 +1,9 @@
 package com.github.vlsi.confplanner.solver;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.github.vlsi.confplanner.model.ConferenceData;
 import com.github.vlsi.confplanner.model.Room;
+import com.github.vlsi.confplanner.model.RoomTimeslot;
 import com.github.vlsi.confplanner.model.Talk;
 import com.github.vlsi.confplanner.model.Timeslot;
 import org.optaplanner.core.api.domain.entity.PlanningEntity;
@@ -9,26 +11,20 @@ import org.optaplanner.core.api.domain.lookup.PlanningId;
 import org.optaplanner.core.api.domain.variable.PlanningVariable;
 
 import java.time.OffsetDateTime;
-import java.util.concurrent.atomic.AtomicLong;
 
 @PlanningEntity(difficultyComparatorClass = TalkPlacementDifficultyComparator.class,
         movableEntitySelectionFilter = TalkPlacementMoveableFilter.class)
 public class TalkPlacement {
-    private static AtomicLong IG_GENERATOR = new AtomicLong();
-    @JsonIgnore
-    private Long id;
     private Talk talk;
-    private Room room;
-    private Timeslot slot;
     private boolean hasSequence;
     private boolean moveable = true;
+    private RoomTimeslot roomTimeslot;
 
     public TalkPlacement() {
         // for planning
     }
 
     public TalkPlacement(Talk talk) {
-        this.id = IG_GENERATOR.getAndIncrement();
         this.talk = talk;
     }
 
@@ -40,31 +36,35 @@ public class TalkPlacement {
         this.talk = talk;
     }
 
-    @PlanningVariable(valueRangeProviderRefs = "roomsProvider", strengthComparatorClass = Room.RoomByCapacity.class)
+    @PlanningVariable(valueRangeProviderRefs = "roomTimeslots", strengthComparatorClass = RoomTimeslot.RoomByCapacity.class)
+    public RoomTimeslot getRoomTimeslot() {
+        return roomTimeslot;
+    }
+
+    public void setRoomTimeslot(RoomTimeslot roomTimeslot) {
+        if (this.roomTimeslot == null) {
+            System.out.println(talk + " => " + roomTimeslot);
+        }
+        this.roomTimeslot = roomTimeslot;
+    }
+
     public Room getRoom() {
-        return room;
+        if (roomTimeslot == null) {
+            return null;
+        }
+        return roomTimeslot.getRoom();
     }
 
-    public void setRoom(Room room) {
-        this.room = room;
-    }
-
-    @PlanningVariable(valueRangeProviderRefs = "timeslotsProvider")
     public Timeslot getSlot() {
-        return slot;
-    }
-
-    public void setSlot(Timeslot slot) {
-        this.slot = slot;
+        if (roomTimeslot == null) {
+            return null;
+        }
+        return roomTimeslot.getSlot();
     }
 
     @PlanningId
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
+    public String getId() {
+        return talk.getName();
     }
 
     @JsonIgnore

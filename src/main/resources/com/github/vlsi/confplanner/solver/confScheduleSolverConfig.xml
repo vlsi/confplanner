@@ -17,9 +17,9 @@
     </constructionHeuristic>
     <localSearch>
         <unionMoveSelector>
-            <changeMoveSelector/>
+            <!--<changeMoveSelector/>-->
             <swapMoveSelector>
-                <!--<filterClass>org.optaplanner.examples.curriculumcourse.solver.move.DifferentCourseSwapMoveFilter</filterClass>-->
+                <filterClass>com.github.vlsi.confplanner.solver.TaskPlacementMoveFilter</filterClass>
             </swapMoveSelector>
         </unionMoveSelector>
         <!--<acceptor>-->
@@ -29,10 +29,14 @@
         <!--<acceptedCountLimit>900</acceptedCountLimit>-->
         <!--</forager>-->
         <acceptor>
-            <lateAcceptanceSize>600</lateAcceptanceSize>
+            <lateAcceptanceSize>7000</lateAcceptanceSize>
+            <entityTabuRatio>0.05</entityTabuRatio>
+            <!--<simulatedAnnealingStartingTemperature>100hard/10000soft</simulatedAnnealingStartingTemperature>-->
         </acceptor>
         <forager>
             <acceptedCountLimit>4</acceptedCountLimit>
+            <!--<acceptedCountLimit>1000</acceptedCountLimit>-->
+            <!--<finalistPodiumType>STRATEGIC_OSCILLATION</finalistPodiumType>-->
         </forager>
         <!--<acceptor>-->
         <!--<stepCountingHillClimbingSize>200</stepCountingHillClimbingSize>-->

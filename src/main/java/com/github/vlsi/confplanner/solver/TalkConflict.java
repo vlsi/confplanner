@@ -48,7 +48,7 @@ public class TalkConflict {
 
     @Override
     public String toString() {
-        return "TalkConflict{count=" + count +
+        return "TalkConflict{count=" + ((int) count) +
                 ", a=" + a +
                 ", b=" + b +
                 '}';

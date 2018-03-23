@@ -32,5 +32,6 @@ public class TalkSequence {
     public enum Type {
         ADJACENT,
         SOFT,
+        CONFLICTS,
     }
 }

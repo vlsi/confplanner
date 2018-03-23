@@ -28,4 +28,11 @@ public class Day implements Comparable<Day> {
     public int compareTo(Day o) {
         return date.compareTo(o.date);
     }
+
+    @Override
+    public String toString() {
+        return "Day{" +
+                "name='" + name + '\'' +
+                '}';
+    }
 }

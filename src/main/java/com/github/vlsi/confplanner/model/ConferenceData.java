@@ -20,7 +20,19 @@ import org.optaplanner.core.api.score.constraint.Indictment;
 
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -35,13 +47,20 @@ public class ConferenceData {
     private List<Talk> talks;
     private List<Timeslot> timeslots;
     private List<Day> days;
-    private List<RoomTimeslots> roomAvailability;
-    private List<RoomTimeslots> roomUnavailability;
+    private List<RoomsTimeslots> roomAvailability;
+    private List<RoomsTimeslots> roomUnavailability;
     //    @JsonIgnore
     private List<TalkPlacement> talkPlacements;
     private List<ExpectedNumListeners> expectedNumListeners;
     private Collection<ExpectedNumListeners> computedListeners;
     private List<TalkSequence> talkSequence;
+
+    @JsonIgnore
+    private List<Grade> grades = Arrays.asList(
+            new Grade("200"),
+            new Grade("300"),
+            new Grade("400")
+    );
 
     private List<FlatVotes> votes;
 
@@ -52,6 +71,8 @@ public class ConferenceData {
     private Map<Talk, Talk> talkMap;
     @JsonIgnore
     private Map<Talk, TalkPlacement> talkPlacementMap;
+    @JsonIgnore
+    private Set<RoomTimeslot> preassignedSlots = new HashSet<>();
 
     // planning
     private HardSoftScore score;
@@ -60,6 +81,11 @@ public class ConferenceData {
     @JsonIgnore
     private Collection<TalkConflict> talkConflicts;
     private int roomCapacityFactor;
+
+    @ProblemFactCollectionProperty
+    public List<Grade> getGrades() {
+        return grades;
+    }
 
     public int getCapacity() {
         return capacity;
@@ -136,19 +162,19 @@ public class ConferenceData {
         this.days = days;
     }
 
-    public List<RoomTimeslots> getRoomAvailability() {
+    public List<RoomsTimeslots> getRoomAvailability() {
         return roomAvailability;
     }
 
-    public void setRoomAvailability(List<RoomTimeslots> roomAvailability) {
+    public void setRoomAvailability(List<RoomsTimeslots> roomAvailability) {
         this.roomAvailability = roomAvailability;
     }
 
-    public List<RoomTimeslots> getRoomUnavailability() {
+    public List<RoomsTimeslots> getRoomUnavailability() {
         return roomUnavailability;
     }
 
-    public void setRoomUnavailability(List<RoomTimeslots> roomUnavailability) {
+    public void setRoomUnavailability(List<RoomsTimeslots> roomUnavailability) {
         this.roomUnavailability = roomUnavailability;
     }
 
@@ -168,8 +194,9 @@ public class ConferenceData {
         this.talkPositions = talkPositions;
         for (TalkPlace p : talkPositions) {
             TalkPlacement place = talkPlacementMap.get(p.getTalk());
-            place.setSlot(p.getSlot());
-            place.setRoom(p.getRoom());
+            RoomTimeslot rts = new RoomTimeslot(p.getRoom(), p.getSlot());
+            preassignedSlots.add(rts);
+            place.setRoomTimeslot(rts);
             place.setMoveable(false);
         }
     }
@@ -219,27 +246,37 @@ public class ConferenceData {
             List<RoomTimeslot> timeslots = customAvailable.get(room);
             if (timeslots != null) {
                 res.addAll(timeslots);
-                continue;
-            }
-            for (Timeslot timeslot : getTimeslots()) {
-                res.add(new RoomTimeslot(room, timeslot));
+            } else {
+                for (Timeslot timeslot : getTimeslots()) {
+                    res.add(new RoomTimeslot(room, timeslot));
+                }
             }
             timeslots = customUnavailable.get(room);
             if (timeslots != null) {
                 res.removeAll(timeslots);
             }
         }
+        res.removeAll(preassignedSlots);
         return new ArrayList<>(res);
     }
 
-    private Map<Room, List<RoomTimeslot>> groupSlots(List<RoomTimeslots> available) {
+    private Map<Room, List<RoomTimeslot>> groupSlots(List<RoomsTimeslots> available) {
         if (available == null) {
             return Collections.emptyMap();
         }
-        return available
-                .stream()
-                .flatMap(rts -> rts.getTimeslots().stream().map(t -> new RoomTimeslot(rts.getRoom(), t)))
-                .collect(Collectors.groupingBy(RoomTimeslot::getRoom));
+        Map<Room, List<RoomTimeslot>> res = new HashMap<>();
+        for (RoomsTimeslots roomsTimeslots : available) {
+            for (Room room : roomsTimeslots.getRooms()) {
+                List<RoomTimeslot> slots = res.computeIfAbsent(room, (Room r) -> new ArrayList());
+                for (Timeslot timeslot : roomsTimeslots.getTimeslots()) {
+                    RoomTimeslot rts = new RoomTimeslot(room, timeslot);
+                    if (!slots.contains(rts)) {
+                        slots.add(rts);
+                    }
+                }
+            }
+        }
+        return res;
     }
 
     public List<FlatVotes> getVotes() {

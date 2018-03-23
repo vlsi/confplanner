@@ -6,19 +6,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public class RoomTimeslots {
-    private final Room room;
+public class RoomsTimeslots {
+    private final List<Room> rooms;
     @JsonAlias("timeslot")
     @JsonIdentityReference(alwaysAsId = true)
     private final List<Timeslot> timeslots;
 
-    public RoomTimeslots(@JsonProperty("room") Room room, @JsonProperty("timeslots") List<Timeslot> timeslots) {
-        this.room = room;
+    public RoomsTimeslots(@JsonProperty("rooms") List<Room> rooms, @JsonProperty("timeslots") List<Timeslot> timeslots) {
+        this.rooms = rooms;
         this.timeslots = timeslots;
     }
 
-    public Room getRoom() {
-        return room;
+    public List<Room> getRooms() {
+        return rooms;
     }
 
     public List<Timeslot> getTimeslots() {
@@ -30,15 +30,15 @@ public class RoomTimeslots {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        RoomTimeslots that = (RoomTimeslots) o;
+        RoomsTimeslots that = (RoomsTimeslots) o;
 
-        if (!room.equals(that.room)) return false;
+        if (!rooms.equals(that.rooms)) return false;
         return timeslots.equals(that.timeslots);
     }
 
     @Override
     public int hashCode() {
-        int result = room.hashCode();
+        int result = rooms.hashCode();
         result = 31 * result + timeslots.hashCode();
         return result;
     }
