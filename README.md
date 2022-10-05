@@ -1,6 +1,12 @@
 Conference planner
 ==================
 
+Archived
+--------
+
+The repository has been archived since the tool has been abandoned/migrated.
+
+
 About
 -----
 This project helps to plan conference schedules via [OptaPlanner](http://www.optaplanner.org/).
